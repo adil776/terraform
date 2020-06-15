@@ -9,8 +9,10 @@
 <?php
   $cloudfront_url = `head -n1 mydesti.txt`;
   $img_path = "C:\Users\Dell\Desktop\terra\task1\hiii\adil.JPG";
+  $im_path = "https://".$cloudfront_url."/adil.JPG";
   echo "<br>";
   echo "<img src='{$img_path}' width=200 height=200>";
+  echo "<img src='{$im_path}' width=200 height=200>";
 ?>
 </body>
 </html>
