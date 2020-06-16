@@ -9,7 +9,7 @@
   $cloudfront_url = `d3k1qacqoz9wrd.cloudfront.net`;
   $img_path = "https://".$cloudfront_url."/adil.JPG";
   echo "<br>";
-  echo "<img src='{$im_path}' width=200 height=200>";
+  echo "<img src='{$im_path}' width=600 height=500>";
 ?>
 </body>
 </html>
