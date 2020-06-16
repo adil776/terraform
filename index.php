@@ -7,9 +7,9 @@
 <br>
 <?php
   $cloudfront_url = `head -n1 my.txt`;
-  $img_path = "https://".$cloudfront_url."/adil.JPG";
+  $img_path = "https://".$cloudfront_url."/img.jpg";
   echo "<br>";
-  echo "<img src='{$img_path}' width=600 height=500>";
+  echo "<img src='{$img_path}' width=300 height=300>";
 ?>
 </body>
 </html>
