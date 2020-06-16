@@ -114,7 +114,7 @@ depends_on  = [
 			     "sudo rm -rf /var/www/html/*",
 			     "sudo git clone https://github.com/adil776/terraform.git /var/www/html/",
 		             "sudo su <<EOF",
-     			     "echo \"${aws_cloudfront_distribution.cloud_dist.domain_name}\" >> /var/www/html/mydesti.txt",
+     			     "echo \"${aws_cloudfront_distribution.cloud_dist.domain_name}\" >> /var/www/html/my.txt",
      			     "EOF",
     			     "sudo systemctl restart httpd"
        ]
