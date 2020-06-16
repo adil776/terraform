@@ -13,9 +13,9 @@ resource "aws_key_pair" "deployer" {
   public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQD3F6tyPEFEzV0LX3X8BsXdMsQz1x2cEikKDEY0aIj41qgxMCP/iteneqXSIFZBp5vizPvaoIR3Um9xK7PGoW8giupGn+EPuxIA4cDM4vzOqOkiMPhz5XK0whEjkVzTo4+S0puvDZuwIsdiW9mxhJc7tgBNL0cYlWSYVkz4G/fslNfRPW5mYAM49f4fhtxPb5ok4Q2Lg9dPKVHO/Bgeu5woMc7RY0p1ej6D4CKFE6lymSDJpW0YHX/wqE9+cfEauh7xZcG0q9t2ta6F6fmX0agvpFyZo8aFbXeUBr7osSCJNgvavWbM/06niWrOvYX2xwWdhXmXSrbX8ZbabVohBK41 email@example.com"
 }
 
-resource "aws_security_group" "mysec1" {
+resource "aws_security_group" "allow_tls" {
 
-	name = mysec1
+	name = "allow_tls"
 	description = "Allow HTTP and SSH inbound traffic"
 	
 	ingress	{
@@ -59,11 +59,11 @@ resource "aws_instance" "myos1" {
 ami           = "ami-0447a12f28fddb066"
 instance_type = "t2.micro"
 key_name   = var.enter_your_key
-security_groups=["${aws_security_group.mysec1.name}"]
+security_groups=["${aws_security_group.allow_tls.name}"]
 connection {
     type     = "ssh"
     user     = "ec2-user"
-    private_key= file("C:\Users\Dell\Downloads\terraform\adil.pem")
+    private_key= file("C:/Users/Dell/Downloads/key1.pem")
     host     = aws_instance.myos1.public_ip
   }
 //remote provisioner
@@ -80,28 +80,31 @@ connection {
   }
 }
 
-resource "aws_ebs_volume" "vol1" {
-	availability_zone  = "ap-south-1a"
-	type	   = "gp2"
+resource "aws_ebs_volume" "vol" {
+	availability_zone  = "ap-south-1b"
 	size		   = 1
-	tags		   = {
-		Name = "vol1ebs"
-	}
+	tags = {
+	  Name = "vol1ebs"
+  }
 }
 
-esource "aws_volume_attachment" "ebs_attach" {
+resource "aws_volume_attachment" "ebs_att" {
   device_name = "/dev/sdh"
-  volume_id   = aws_ebs_volume.vol1.id
-  instance_id = aws_instance.myos1.id 
-  force_detach=true
+  volume_id   = "${aws_ebs_volume.vol.id}"
+  instance_id = "${aws_instance.myos1.id}"
+  force_detach = true
 }
 
-resource "null_resource" "mount_git" {
+resource "null_resource" "formatgit" {
+
+depends_on  = [
+	aws_volume_attachment.ebs_att,
+     ]
 
 	connection {
 		type  = "ssh"
 		user  = "ec2-user"
-		private_key  = file("C:\Users\Dell\Downloads\terraform\adil.pem")
+		private_key  = file("C:/Users/Dell/Downloads/key1.pem")
 		host  = aws_instance.myos1.public_ip
 	}
 	provisioner "remote-exec" {
@@ -110,10 +113,14 @@ resource "null_resource" "mount_git" {
 			     "sudo mount /dev/xvdc /var/www/html",
 			     "sudo rm -rf /var/www/html/*",
 			     "sudo git clone https://github.com/adil776/terraform.git /var/www/html/",
-		]
+		             "sudo su <<EOF",
+     			     "echo \"${aws_cloudfront_distribution.cloud_dist.domain_name}\" >> /var/www/html/mydesti.txt",
+     			     "EOF",
+    			     "sudo systemctl restart httpd"
+       ]
 		
 	}
-	depends_on  = ["aws_volume_attachment.ebs_attach"]
+	
 }
 
 
@@ -130,14 +137,14 @@ resource "aws_s3_bucket" "mys31" {
 resource "null_resource" "cloning" {
 depends_on=[ aws_s3_bucket.mys31]
   provisioner "local-exec" {
-    command = "git clone https://github.com/adil776/terraform.git myimages"
+    command = "git clone https://github.com/adil776/terraform.git my"
   }
 }
 //creating s3-bucket-object 
 resource "aws_s3_bucket_object" "object" {
   bucket = "adil786"
-  key    = "adil.jpg"
-  source = "myimages/adil.jpg"
+  key    = "adil.JPG"
+  source = "my/adil.JPG"
   acl="public-read"
 depends_on= [aws_s3_bucket.mys31,null_resource.cloning]
 }
@@ -151,20 +158,20 @@ resource "aws_cloudfront_distribution" "cloud_dist" {
  
         custom_origin_config {
             http_port = 80
-            https_port = 443
+            https_port = 80
             origin_protocol_policy = "match-viewer"
             origin_ssl_protocols = ["TLSv1", "TLSv1.1", "TLSv1.2"]
         }
     }
     # By default, show index.html file
-    default_root_object = "adil.php"
+    default_root_object = "index.php"
     enabled = true
     # If there is a 404, return index.html with a HTTP 200 Response
     custom_error_response {
         error_caching_min_ttl = 3000
         error_code = 404
         response_code = 200
-        response_page_path = "/adil.php"
+        response_page_path = "/index.php"
     }
 
 default_cache_behavior {
